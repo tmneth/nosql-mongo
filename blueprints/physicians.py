@@ -73,3 +73,16 @@ def get_average_age():
         return jsonify({"averageAge": avg_age}), 200
     else:
         return jsonify({"error": "Failed to compute average age."}), 500
+
+
+@physicians_blueprint.route('/specialty-count', methods=['GET'])
+def get_physician_counts_by_specialty():
+    pipeline = [
+        {"$group": {"_id": "$specialty", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ]
+    result = list(db.physicians.aggregate(pipeline))
+    if result:
+        return jsonify(result), 200
+    else:
+        return jsonify({"error": "Failed to compute counts by specialty."}), 500
