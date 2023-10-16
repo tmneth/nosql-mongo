@@ -1,5 +1,7 @@
 from typing import List, Optional
 
+from bson.objectid import ObjectId
+
 
 class Hospital:
     def __init__(self, name: str, address: str):
@@ -9,7 +11,8 @@ class Hospital:
 
 
 class Department:
-    def __init__(self, name: str):
+    def __init__(self, _id: ObjectId, name: str):
+        self._id = _id
         self.name = name
         self.equipment: List[Equipment] = []
         self.facilities: List[Facility] = []
