@@ -21,10 +21,10 @@ def add_physician():
             physician_data["certifications"] = data["certifications"]
 
         db.physicians.insert_one(physician_data)
-        return jsonify({"message": "Physician added!"}), 201
+        return jsonify({"message": "Physician added successfully"}), 201
 
     except KeyError:
-        abort(400, description="Invalid data.")
+        abort(400, description="Invalid data")
 
 
 @physicians_blueprint.route('/', methods=['GET'])
@@ -38,9 +38,9 @@ def remove_physician(physician_id):
     validate_object_id(physician_id)
     result = db.physicians.delete_one({"_id": ObjectId(physician_id)})
     if result.deleted_count:
-        return jsonify({"message": "Physician removed!"}), 200
+        return jsonify({"message": "Physician removed successfully"}), 200
     else:
-        abort(404, description="Physician not found.")
+        abort(404, description="Physician not found")
 
 
 @physicians_blueprint.route('/<physician_id>/certifications', methods=['POST'])
@@ -49,7 +49,7 @@ def add_certification_to_physician(physician_id):
     data = request.get_json()
 
     if not data or 'name' not in data:
-        abort(400, description="Invalid data.")
+        abort(400, description="Invalid data")
 
     result = db.physicians.update_one(
         {"_id": ObjectId(physician_id)},
@@ -57,9 +57,9 @@ def add_certification_to_physician(physician_id):
     )
 
     if result.modified_count:
-        return jsonify({"message": "Certification added to physician!"}), 201
+        return jsonify({"message": "Certification added to physician successfully"}), 201
     else:
-        abort(500, description="Failed to add certification to physician.")
+        abort(500, description="Failed to add certification to physician")
 
 
 @physicians_blueprint.route('/average-age', methods=['GET'])
@@ -72,17 +72,31 @@ def get_average_age():
         avg_age = round(result[0]["averageAge"], 2)
         return jsonify({"averageAge": avg_age}), 200
     else:
-        return jsonify({"error": "Failed to compute average age."}), 500
+        return jsonify({"error": "Operation failed"}), 500
 
 
 @physicians_blueprint.route('/specialty-count', methods=['GET'])
 def get_physician_counts_by_specialty():
     pipeline = [
         {"$group": {"_id": "$specialty", "count": {"$sum": 1}}},
-        {"$sort": {"count": -1}}
+        {"$sort": {"count": -1}}  # descending
     ]
     result = list(db.physicians.aggregate(pipeline))
     if result:
         return jsonify(result), 200
     else:
-        return jsonify({"error": "Failed to compute counts by specialty."}), 500
+        return jsonify({"error": "Operation failed"}), 500
+
+
+@physicians_blueprint.route('/certifications-count', methods=['GET'])
+def get_certification_counts():
+    pipeline = [
+        {"$unwind": "$certifications"},
+        {"$group": {"_id": "$certifications.name", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}  # descending
+    ]
+    result = list(db.physicians.aggregate(pipeline))
+    if result:
+        return jsonify(result), 200
+    else:
+        return jsonify({"error": "Operation failed"}), 500
