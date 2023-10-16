@@ -40,10 +40,10 @@ def remove_hospital(hospital_id):
 def add_department_to_hospital(hospital_id):
     data = request.get_json()
     try:
-        department = Department(name=data['name'])
-        db.departments.insert_one(department.__dict__)
+        department_id = ObjectId()
+        department = Department(_id=department_id, name=data['name'])
         db.hospitals.update_one({"_id": ObjectId(hospital_id)}, {"$push": {"departments": department.__dict__}})
-        return jsonify({"message": "Department added to hospital!"}), 201
+        return jsonify({"message": "Department added to hospital!", "department_id": str(department_id)}), 201
     except KeyError:
         abort(400, description="Invalid data.")
 
@@ -100,27 +100,31 @@ def add_facility_to_department(hospital_id, department_id):
         abort(400, description="Invalid data.")
 
 
-@hospitals_blueprint.route('/<hospital_id>/departments/<department_id>/equipment', methods=['GET'])
-def get_equipment_for_department(hospital_id, department_id):
+@hospitals_blueprint.route('/<hospital_id>/all-equipment', methods=['GET'])
+def get_all_equipment_for_hospital(hospital_id):
     hospital = db.hospitals.find_one({"_id": ObjectId(hospital_id)})
+
     if not hospital:
         abort(404, description="Hospital not found.")
 
+    all_equipment = []
+
     for department in hospital["departments"]:
-        if department["_id"] == ObjectId(department_id):
-            return json_util.dumps(department["equipment"]), 200
+        all_equipment.extend(department["equipment"])
 
-    abort(404, description="Department not found in the specified hospital.")
+    return json_util.dumps(all_equipment), 200
 
 
-@hospitals_blueprint.route('/<hospital_id>/departments/<department_id>/facilities', methods=['GET'])
-def get_facilities_for_department(hospital_id, department_id):
+@hospitals_blueprint.route('/<hospital_id>/all-facilities', methods=['GET'])
+def get_all_facilities_for_hospital(hospital_id):
     hospital = db.hospitals.find_one({"_id": ObjectId(hospital_id)})
+
     if not hospital:
         abort(404, description="Hospital not found.")
 
-    for department in hospital["departments"]:
-        if department["_id"] == ObjectId(department_id):
-            return json_util.dumps(department["facilities"]), 200
+    all_facilities = []
 
-    abort(404, description="Department not found in the specified hospital.")
+    for department in hospital["departments"]:
+        all_facilities.extend(department["facilities"])
+
+    return json_util.dumps(all_facilities), 200

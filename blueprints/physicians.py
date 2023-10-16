@@ -62,7 +62,7 @@ def add_certification_to_physician(physician_id):
         abort(500, description="Failed to add certification to physician.")
 
 
-@physicians_blueprint.route('/physicians/average-age', methods=['GET'])
+@physicians_blueprint.route('/average-age', methods=['GET'])
 def get_average_age():
     pipeline = [
         {"$group": {"_id": None, "averageAge": {"$avg": "$age"}}}
